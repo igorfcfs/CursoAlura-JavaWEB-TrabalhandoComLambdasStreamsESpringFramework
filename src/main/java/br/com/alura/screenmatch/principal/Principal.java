@@ -1,12 +1,17 @@
 package br.com.alura.screenmatch.principal;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import br.com.alura.screenmatch.model.DadosEpisodio;
 import br.com.alura.screenmatch.model.DadosSerie;
 import br.com.alura.screenmatch.model.DadosTemporada;
+import br.com.alura.screenmatch.model.Episodio;
 import br.com.alura.screenmatch.service.ConsumoApi;
 import br.com.alura.screenmatch.service.ConverteDados;
 
@@ -83,6 +88,34 @@ public class Principal {
 	    		System.out.println(e.numero() + ". " + e.titulo());
 	    	});
 	    });
-		
+	    
+	    //Operacoes em stream: intermediarias -> geram novos fluxos de dados para fazer operacoes agregadas; finais -> finalizam (coletar para uma outra lista, imprimir, percorrer [forEach()], etc)
+//	    List<String> nomes = Arrays.asList("Jacque", "Iasmin", "Paulo", "Rodrigo", "Nico");
+//	    nomes.stream().sorted().forEach(System.out::println);
+//	    nomes.stream().sorted().limit(3).forEach(System.out::println);
+//	    nomes.stream().sorted().limit(3).filter(n -> n.startsWith("N")).forEach(System.out::println);
+//	    nomes.stream().sorted().limit(3).filter(n -> n.startsWith("N")).map(n -> n.toUpperCase()).forEach(System.out::println);
+	    
+	    //map -> recurso que transforma um dado
+	    //flatMap -> recurso que aglutina lista
+	    //.collect(Collectors.toList()) -> retorna uma lista mutavel
+	    //.toList() -> retorna uma lista imutavel
+	    System.out.println("\nTop 5 Episodes:");
+	    List<DadosEpisodio> dadosEpisodios = temporadas.stream().flatMap(t -> t.episodios().stream()).collect(Collectors.toList()); //lista mutavel
+	    dadosEpisodios.stream().filter(e -> !e.avaliacao().equalsIgnoreCase("N/A")).sorted(Comparator.comparing(DadosEpisodio::avaliacao).reversed()).limit(5).forEach(System.out::println);
+	    System.out.println();
+	    List<Episodio> episodios = temporadas.stream().flatMap(t -> t.episodios().stream().map(d -> new Episodio(t.numero(), d))).collect(Collectors.toList());
+	    episodios.forEach(System.out::println);
+	    
+	    
+	    System.out.print("A partir de que ano você deseja ver os episódios: ");
+	    var ano = leitura.nextInt();
+	    leitura.nextLine();
+	    
+	    LocalDate dataBusca = LocalDate.of(ano, 1, 1);
+	    
+	    DateTimeFormatter formatador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+	    
+	    episodios.stream().filter(e -> e.getDataLancamento() != null && e.getDataLancamento().isAfter(dataBusca)).forEach(e -> System.out.println("Temporada: " + e.getTemporada() + " | Episódio: " + e.getTitulo() + " | Data Lançamento: " + e.getDataLancamento().format(formatador)));
 	}
 }
